@@ -12,6 +12,22 @@ void bacaserial(int wait) {
   Serial.flush();
 }
 
+void cekSerial(unsigned long times) {
+  indeks = 0;
+  mulai = millis();
+  while (millis() - mulai < times) {
+    while (SIM7000.available()) {
+      karakter = SIM7000.read();
+      if (karakter == 'O' || karakter == 'E') {
+        indeks = 1;
+        break;
+      }
+      Serial.print(karakter);
+    }
+    if (indeks == 1) break;
+  }
+}
+
 byte ConnectAT(String cmd, int d) {
   indeks = 0;
   while (1) {
@@ -29,26 +45,26 @@ byte ConnectAT(String cmd, int d) {
   return indeks;
 }
 
-void initGSM() { 
+void initGSM() {
   //ATUR MODUL GSM UNTUK TIDAK SLEEP
   SIM7000.println(F("AT+CSCLK=0"));
   bacaserial(200);
-  
+
   //CONNECT AT
   for (i = 0; i < 6; i++) {
-    indeks2 = ConnectAT(F("AT"), 100);
-    if (indeks2 == 8) {
+    indeks1 = ConnectAT(F("AT"), 100);
+    if (indeks1 == 8) {
       Serial.println(F("GSM MODULE OK!!"));
       Serial.flush();
       SIM7000.flush();
       break;
     }
-    if (indeks2 < 8) {
+    if (indeks1 < 8) {
       Serial.println(F("GSM MODULE ERROR"));
       Serial.flush();
       SIM7000.flush();
 
-      if (i==5) {
+      if (i == 5) {
         Serial.println(F("CONTACT CS!!!"));
         Serial.flush();
         SIM7000.flush();
@@ -64,11 +80,8 @@ void initGSM() {
 
 
   //CEK KARTU SIAP ATAU TIDAK. "+CPIN: READY" YANG DIINGINKAN
-  SIM7000.println(F("AT+CPIN?"));
-  bacaserial(200);
-
   //SET PHONE FUNCTIONALITY MENJADI FULL FUNCTIONALITY
-  SIM7000.println(F("AT+CFUN=1"));
+  SIM7000.println(F("AT+CPIN?;+CFUN=1"));
   bacaserial(200);
 
   //ATUR BAND KE SELURUH MODE
@@ -80,18 +93,15 @@ void initGSM() {
   //  bacaserial(200);
 
   //PEMILIHAN MODE YANG DIINGINKAN KE 13 (GSM ONLY) ATAU 51 (GSM AND LTE)
-  SIM7000.println(F("AT+CNMP=13"));
-  bacaserial(200);
-
   //PEMILIHAN MODE CAT-M ATAU NB-IOT [1.CAT-M] [2.NB-Iot] [3.CAT-M & NB-IoT]
-  SIM7000.println(F("AT+CMNB=3"));
+  SIM7000.println(F("AT+CNMP=13;+CMNB=3"));
   bacaserial(200);
 
   //DEFINE PDP CONTEXT
-  kalimat="AT+CGDCONT=1,\"IP\",\"" + IP+ "\"";
+  kalimat = "AT+CGDCONT=1,\"IP\",\"" + String(IP) + "\"";
   SIM7000.println(kalimat);
   bacaserial(200);
-  kalimat="AT+CGDCONT=13,\"IP\",\"" + IP+ "\"";
+  kalimat = "AT+CGDCONT=13,\"IP\",\"" + String(IP) + "\"";
   SIM7000.println(kalimat);
   bacaserial(200);
 
@@ -125,8 +135,8 @@ void initGSM() {
 
     //option if not register at network
     if (kalimat == "")  {
-      indeks2++;
-      if (indeks2 == 15) {
+      i++;
+      if (i == 15) {
         Serial.println(F("OPERATOR PROVIDER TIDAK DITEMUKAN"));
         while (1) {
           digitalWrite(ledERROR, 1);
@@ -139,24 +149,18 @@ void initGSM() {
     if (kalimat.length() > 3) break;
     delay(1000);
   }
-  Serial.println(F("OPERATOR PROVIDER DITEMUKAN"));
-  Serial.flush();
 
   //CEK KEKUATAN SINYAL
   SIM7000.println(F("AT+CSQ"));
   bacaserial(200);
 
   //CEK PDP CONTEXT APAKAH SUDAH SESUAI
-  SIM7000.println(F("AT+CGDCONT?"));
-  bacaserial(200);
-
   //CEK STATUS REGISTRASI NETWORK GPRS
-  SIM7000.println(F("AT+CGREG?"));
+  SIM7000.println(F("AT+CGDCONT?;+CGREG?"));
   bacaserial(200);
 
   //CEK INFORMASI MENGENAI JARINGAN GSM ATAU NB IOT DARI PROVIDER YANG DITERIMA MODUL GSM
-  SIM7000.println(F("AT+CPSI?"));
-  bacaserial(200);
-  SIM7000.println(F("AT+CENG?"));
-  bacaserial(200);
+  SIM7000.println(F("AT+CPSI?;+CENG?"));
+  bacaserial(2000);
+  delay(200);
 }
