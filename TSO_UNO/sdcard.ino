@@ -3,6 +3,8 @@
 
 File file;
 
+
+
 //SD INIT
 void sdInit() {
   if (!SD.begin(SSpin)) { //SD ERROR
@@ -26,7 +28,7 @@ void configs() {
   file = SD.open(F("config.txt"));
   if (file) {
     while (file.available()) {
-      sdcard[indeks++] = file.read();
+      kata[indeks++] = file.read();
     }
   }
   else  { //error reading
@@ -35,23 +37,18 @@ void configs() {
   }
   file.close();
 
-  kalimat = String(sdcard);
-  for ( indeks = 0; indeks < sizeof(sdcard); indeks++) { //clear variable
-    sdcard[indeks] = (char)0;
-  }
-
-  Serial.println(kalimat);
-  Serial.flush();
+  kalimat = String(kata);
+//  Serial.println(kalimat);
+  hapus();
   Serial.println(F("GET CONFIG SUCCESS!!!"));
   Serial.flush();
 
-  indeks1 = 0;
-
   //ID
-  indeks = kalimat.indexOf("=", indeks1 + 1);
+  indeks = kalimat.indexOf("=", 1);
   indeks1 = kalimat.indexOf("\r", indeks + 1);
-  ID = kalimat.substring(indeks + 2, indeks1);
-
+  json= kalimat.substring(indeks + 2, indeks1);
+  json.toCharArray(ID,5);
+  
   //interval data
   indeks = kalimat.indexOf("=", indeks1 + 1);
   indeks1 = kalimat.indexOf("\r", indeks + 1);
@@ -61,6 +58,66 @@ void configs() {
   indeks = kalimat.indexOf("=", indeks1 + 1);
   indeks1 = kalimat.indexOf("\r", indeks + 1);
   burst = kalimat.substring(indeks + 1, indeks1).toInt();
+}
 
-  kalimat = '0';
+void cekfile() {
+  while (1) {
+    kalimat = "LOG" + String(nomor) + F(".txt");
+    kalimat.toCharArray(kata, 13);
+    indeks = SD.exists(kata);
+    if (indeks == 0) {
+      Serial.println(kalimat + F(" doesn't exist"));
+      Serial.flush();
+      file = SD.open(kalimat, FILE_WRITE);
+      file.println(F("Waktu (tahun/bulan/hari jam:menit:detik) , Tekanan (Bar), Kode"));
+      file.flush();
+      file.close();
+      indeks1 = 1;
+      break;
+    }
+    else {
+      Serial.println(kalimat + F(" exist"));
+      Serial.flush();
+      nomor++;
+    }
+    delay(500);
+    if (indeks1 == 1) {
+      break;
+    }
+  }
+}
+
+void simpanData(){
+  kalimat = "LOG" + String(nomor) + ".txt";
+  SdFile::dateTimeCallback(dateTime);
+
+  Serial.print(F("Simpan data ke "));
+  Serial.print(kalimat);
+  file = SD.open(kalimat, FILE_WRITE);
+  file.print("20");
+  file.print(tahun);
+  file.write("/");
+  file.print(bulan);
+  file.write("/");
+  file.print(hari);
+  file.write(" ");
+  file.print(int2digits(jam));
+  file.write(":");
+  file.print(int2digits(menit));
+  file.write(":");
+  file.println(int2digits(detik));
+  file.print(F(","));
+  file.print(tekanan);
+  file.print(F(","));
+  file.println(kode);  file.flush();  
+  file.close();
+  Serial.println(" selesai");
+}
+
+void dateTime(uint16_t* date, uint16_t* time) {
+  // return date using FAT_DATE macro to format fields
+  *date = FAT_DATE(year(), month(), day());
+
+  // return time using FAT_TIME macro to format fields
+  *time = FAT_TIME(hour(), minute(), second());
 }
