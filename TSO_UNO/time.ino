@@ -2,7 +2,10 @@ void NTPtime() {
   // SINKRONISASI WAKTU LOKAL DENGAN WAKTU DARI NETWORK TIME PROVIDER
   SIM7000.println(F("AT+CNTP"));
   SIM7000.flush();
-  bacaserial(200);
+  bacaserial(500);
+  Serial.flush();
+  SIM7000.flush();
+  delay(500);
 }
 
 void waktu() {
@@ -10,15 +13,18 @@ void waktu() {
   tahun = '0'; bulan = '0'; hari = '0'; jam = '0'; menit = '0'; detik = '0';
 
   //AMBIL WAKTU DARI PROVIDER
+//  Serial.println("ambil waktu");
   SIM7000.println(F("AT+CCLK?"));
   SIM7000.flush();
-  bacaserial(200);
+  bacaserial(500);
+  delay(300);
 
   //PISAHKAN DATA WAKTU
   //tahun
-  indeks1 = kalimat.indexOf("\"", 1);
   indeks2 = kalimat.indexOf("/", indeks1 + 1);
-  tahun = kalimat.substring(indeks1 + 1, indeks2).toInt();
+//  Serial.println(indeks2);
+  tahun = kalimat.substring(indeks2-2, indeks2).toInt();
+//  Serial.println(tahun);
 
   //bulan
   indeks1 = kalimat.indexOf("/", indeks2 + 1);
@@ -39,7 +45,7 @@ void waktu() {
   //detik
   indeks1 = kalimat.indexOf("+", indeks2 + 1);
   detik = kalimat.substring(indeks2 + 1, indeks1).toInt();
-  
+
   //Keluarkan tanggal di serial monitor
   Serial.print(F("YYYY/MM/DD HH:MM:SS="));
   Serial.print("20");
@@ -54,7 +60,7 @@ void waktu() {
   Serial.print(int2digits(menit));
   Serial.write(":");
   Serial.println(int2digits(detik));
-
+  setTime(jam, menit, detik, hari, bulan, tahun);
 }
 
 void waktuTunggu() {
@@ -80,7 +86,7 @@ void waktuTunggu() {
     Serial.print(int2digits(minute()));
     Serial.write(":");
     Serial.println(int2digits(second()));
-    delay(1000);
+    indikatorOK();
   }
 }
 
@@ -92,3 +98,4 @@ String int2digits(int number) {
   y += String(number);
   return y;
 }
+
