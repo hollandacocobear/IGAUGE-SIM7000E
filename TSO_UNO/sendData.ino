@@ -5,41 +5,39 @@ boolean GPRScommunication() {
 
   //DEAKTIVASI GPRSPDP CONTEXT DAN TUTUP BEARER
   SIM7000.println(F("AT+CIPSHUT;+SAPBR=0,1"));
-  bacaserial(500);
+  bacaserial(1000);
 
   //CONNECTION TYPE = GPRS ; ATUR APN, USER, DAN PASSWORD
+  delay(200);
   SIM7000.println(F("AT+SAPBR=3,1,\"CONTYPE\",\"GPRS\";+SAPBR=3,1,\"APN\",\"Telkomsel\";+SAPBR=3,1,\"USER\",\"\";+SAPBR=3,1,\"PWD\",\"\""));
   bacaserial(500);
 
   //OPEN BEARER
+  kalimat = "";
   SIM7000.println(F("AT+SAPBR=1,1"));
-  bacaserial(5000);
-  Serial.flush();
-  SIM7000.flush();
+  cekSerial(15000);
   delay(100);
+  //debug
+  //  Serial.print(F("Karakter dari sapbr=1 : "));
+  //  Serial.println(karakter);
 
   //PARSING STRING DARI OPEN BEARER UNTUK CEK OK ATAU ERROR
-  indeks1 = kalimat.indexOf('\r', 1);
-  json = kalimat.substring(indeks1 + 1, kalimat.length());
-
-  if (json == "ERROR" || json=="") {
+  if (karakter != 'O') {
     return 0;
   }
-
+  kalimat = "";
 
   //mulai task and set APN, user name, password
   SIM7000.println(F("AT+CSTT=\"Telkomsel\""));
-  bacaserial(5000);
+  bacaserial(3000);
 
   SIM7000.println(F("AT+CIICR"));
-  bacaserial(3000);
+  cekSerial(5000);
   //PARSING STRING DARI OPEN BEARER UNTUK CEK OK ATAU ERROR
-  indeks1 = kalimat.indexOf('\r', 1);
-  json = kalimat.substring(indeks1 + 1, kalimat.length());
-  if (json == "ERROR") {
+  if (karakter != 'O') {
     return 0;
   }
-
+  
   SIM7000.println(F("AT+CIFSR"));
   bacaserial(200);
 
@@ -47,7 +45,7 @@ boolean GPRScommunication() {
 }
 
 void sendServer() {
-  json="";
+  hapus();
   //TERMINATE HTTP SERVICE
   SIM7000.println(F("AT+HTTPTERM"));
   bacaserial(200);
@@ -83,64 +81,20 @@ void sendServer() {
   SIM7000.println(F("AT+HTTPPARA=CONTENT,application/json"));
   bacaserial(300);
   delay(200);
-  
-  //http://www.mantisid.id/api/product/osh_data_c.php?= {"Data":"003,20190315213555,2456,02356,02201,01233,05,15"}
-  // {"Data":"id unit,yyyymmddhhmmss,tekanan(5 digit),kelembaban(5 digit),suhu(5 digit),volt (5 digit), burst (2 digit), interval (2 digit)"}
-  json="";
-  json  = "{\"Data\":\"";
-  json.concat(String(ID));
-  json.concat(String(",20"));
-  json.concat(String(tahun));
-  if (bulan < 10) {
-    json += "0" + String(bulan);
-  }
-  if (bulan >= 10) {
-    json += String(bulan);
-  }
-  if (hari < 10) {
-    json += "0" + String(hari);
-  }
-  if (hari >= 10) {
-    json += String(hari);
-  }
-  if (jam < 10) {
-    json += "0" + String(jam);
-  }
-  if (jam >= 10) {
-    json.concat(String(jam));
-  }
-  if (menit < 10) {
-    json += "0" + String(menit);
-  }
-  if (menit >= 10) {
-    json.concat(String(menit));
-  }
-  if (detik < 10) {
-    json += "0" + String(detik);
-  }
-  if (detik >= 10) {
-    json.concat(String(detik));
-  }
 
-  json.concat(",");
-  json.concat(String(tekanan,2));
-  json.concat(",-9999,-9999,-9999,");
-  json.concat(String(burst));
-  json.concat(",");
-  json.concat(String(interval));
-  json.concat("\"}");
+  dataJSON();
 
-  Serial.println(json);
-  Serial.flush();
   delay(1000);
   //SET HTTP DATA FOR SENDING TO SERVER
   kalimat = "";
   kalimat.concat("AT+HTTPDATA=");
-  kalimat.concat(String(json.length() + 1));
+  kalimat.concat(String(json).length() + 1);
   kalimat.concat(",15000");
-  Serial.println(kalimat);
-  Serial.flush();
-  delay(2000);
+
+  //debug
+  //  Serial.println(kalimat);
+  //  Serial.flush();
+  //  delay(2000);
   SIM7000.println(kalimat);
   SIM7000.flush();
   while (SIM7000.available() > 0) {
@@ -173,22 +127,22 @@ void sendServer() {
   }
   Serial.flush();
   SIM7000.flush();
+  indeks = '0';
   indeks1 = '0';
-  indeks2 = '0';
   kalimat = "";
   //CHECK KODE HTTPACTION
   while ((mulai + 30000) > millis()) {
     while (SIM7000.available() > 0) {
       karakter = SIM7000.read();
       kalimat += karakter;
-      indeks1 = kalimat.indexOf(":");
-      indeks2 = kalimat.length();
-      if (indeks2 - indeks1 > 8) {
+      indeks = kalimat.indexOf(":");
+      indeks1 = kalimat.length();
+      if (indeks1 - indeks > 8) {
         Serial.println(F("MOVING OUT"));
         break;
       }
     }
-    if (indeks2 - indeks1 > 8) {
+    if (indeks1 - indeks > 8) {
       Serial.println(F("OK"));
       break;
     }
@@ -198,11 +152,12 @@ void sendServer() {
 
   Serial.println(F("Hasil HTTPACTION:"));
   Serial.println(kalimat);
+  Serial.flush();
 
-  indeks1 = '0';
-  indeks1 = kalimat.indexOf(',');
-  indeks2 = kalimat.indexOf(',', indeks1 + 1);
-  kode = kalimat.substring(indeks1 + 1, indeks2).toInt();
+  indeks = '0';
+  indeks = kalimat.indexOf(',');
+  indeks1 = kalimat.indexOf(',', indeks1 + 1);
+  kode = kalimat.substring(indeks + 1, indeks1).toInt();
 
   Serial.print(F("kode="));
   Serial.println(kode);
@@ -212,8 +167,6 @@ void sendServer() {
   delay(10000);
   bacaserial(200);
 
-  indeks1 = '0';
-  indeks2 = '0';
   SIM7000.println(F("AT+HTTPTERM"));
   bacaserial(200);
   Serial.flush();
@@ -224,17 +177,30 @@ void sendServer() {
   bacaserial(200);
 }
 
-void kirimSMS(String input) {
+void kirimSMS() {
   SIM7000.println(F("AT+CMGF=1"));
-  bacaserial(200);
+  bacaserial(500);
+  Serial.println(json);
   kalimat = "AT+CMGS=\"" + String(hp) + ("\"");
   SIM7000.println(kalimat);
   bacaserial(500);
-  delay(500);
-  kalimat = input;
-  if(input.charAt(0)=='{')  kalimat+= "\r\n TIDAK TERKIRIM";
-  SIM7000.println(kalimat);
-  delay(100);
-  SIM7000.println((char)26);
-  bacaserial(1000);
+
+  kalimat = "";
+  if (kode > 0)  kalimat = "http://mantisid.id/project/osh_2019/api/product/osh_data_c.php?";
+  kalimat.concat(json);
+  Serial.println(kalimat);
+  Serial.flush();
+  SIM7000.print(kalimat);
+  SIM7000.write(26);
+  SIM7000.flush();
+  while (1) {
+    while (SIM7000.available() > 0) {
+      karakter = SIM7000.read();
+      Serial.write(karakter);
+      if (karakter == '+')    break;
+    }
+    if (karakter == '+')    break;
+  }
+  bacaserial(200);
+  Serial.println("kirim SMS selesai");
 }
