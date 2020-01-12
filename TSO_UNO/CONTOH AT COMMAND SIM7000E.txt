@@ -1,0 +1,34 @@
+1529B01SIM7000E
+
+
+
+AT+CPIN?;+CFUN=1
+AT+SIMCOMATI
+AT+CBC
+AT+CNMP=13 //51
+AT+CMNB=1 //LTE ONLY
+AT+CLTS=1;+CBAND="ALL_MODE" //GET LOCAL TIME
+AT+CBAND="ALL_MODE"
+
+AT+CGDCONT=1,"IP","Telkomsel";+CGDCONT=13,"IP","Telkomsel"
+
+AT+CGDCONT=1,"IP","nb1internet";+CGDCONT=13,"IP","nb1internet";+CGACT=1,1
+
+AT+COPS?;+CSQ
+AT+CGDCONT?;+CGREG?;+CPSI?
+
+AT+CGATT=1
+AT+CIPSHUT;+SAPBR=0,1
+AT+SAPBR=3,1,"CONTYPE","GPRS";+SAPBR=3,1,"APN","Telkomsel"
+AT+SAPBR=3,1,"USER","wap"
+AT+SAPBR=3,1,"PWD","wap123"
+AT+CSTT="Telkomsel","wap","wap123"
+AT+SAPBR=1,1
+
+
+AT+CIICR
+AT+CIFSR
+
+//ping ke google
+AT+CIPPING="www.google.com"
+AT+CIPPING="http://igauge-logger.mantisid.id/"
