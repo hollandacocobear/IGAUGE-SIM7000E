@@ -1,11 +1,8 @@
 //KONFIGURASI ID DAN INTERVAL
-String ID = "0030";
+char ID[5] = "0030";
 byte interval = 5;
 byte burst = 2;
-float offset= 0.00;
-
-//PARAMETER PEMBAGI WAKTU
-byte pembagiWaktu = 60 / interval;
+float offset = 0.00;
 
 //KONFIGURASI PIN
 #define powerSensor 4 // pin untuk menyalakan sensor
@@ -16,11 +13,11 @@ byte pembagiWaktu = 60 / interval;
 #define pressurePin A0  // Put the data cable to pin A0
 
 //KONFIGURASI NO HP
-char hp[14] = "+6285958553254"; //"+628119811995";
+const char hp[15] = "+6285958553254"; //"+628119811995";
 
 //KONFIGURASI IP. Pilih salah satu
-String IP = "Telkomsel"; // untuk GSM
-//String IP = "nb1internet"; // untuk NB-IoT
+const char IP[10] = "Telkomsel"; // untuk GSM
+//const char IP[12] = "nb1internet"; // untuk NB-IoT
 
 //KONFIGURASI INTERNET
 //String APN = "Telkomsel";
@@ -28,10 +25,11 @@ String IP = "Telkomsel"; // untuk GSM
 //String PWD = "wap123";
 
 char karakter;
-char sdcard[40];
+char kata[30];
 byte i, indeks, indeks1, indeks2;
 String json, kalimat;
-unsigned int kode;
+unsigned int kode = 0;
+unsigned int nomor = 1;
 unsigned long mulai;
 float tekanan;
 byte tahun, bulan, hari, jam, menit, detik;
