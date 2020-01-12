@@ -27,6 +27,7 @@ const char IP[10] = "Telkomsel"; // untuk GSM
 char karakter;
 char kata[30];
 char json[60];
+char tanggal[20];
 byte i, indeks, indeks1;
 String kalimat;
 unsigned int kode = 0;
