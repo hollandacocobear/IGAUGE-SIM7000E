@@ -1,6 +1,7 @@
 // TELKOMSEL IOT PRESSURE DATA LOGGER
 // BOARD : ARDUINO UNO
 // DEVELOPED BY : MANTIS ID
+// REVISED : 2020-1-12
 
 #include <TimeLib.h>
 #include <TimeAlarms.h>
@@ -88,7 +89,7 @@ void setup() {
       if (i == 3) {
         Serial.println(F("Kirim SMS bahwa GPRS Error"));
         json="Stasiun " + ID +" GPRS Error";
-        kirimSMS(json);
+        kirimSMS();
         delay(5000);
         break;
       }
@@ -101,11 +102,11 @@ void setup() {
   }
 
   //ambil waktu dan set waktu untuk alarm
-  Serial.println(F("\r\\nSet waktu pengambilan data sesuai dengan interval"));
+  Serial.println(F("\r\nSet waktu pengambilan data sesuai dengan interval"));
   waktu();
   setTime(jam, menit, detik, hari, bulan, tahun); // set time berdasarkan waktu dari GSM
 
-  waktuTunggu();
+  //waktuTunggu();
 
   // create timers, to trigger relative to when they're created
   Alarm.timerRepeat(interval * 60, ambildata);         // timer setiap interval dalam satuan detik
@@ -131,22 +132,32 @@ void ambildata() {
   Serial.println(F(" bar\n"));
 
   //coba pengiriman data ker server sebanyak 3 kali
+  byte indeksGPRS=0;
   for (i = 1; i < 4; i++) {
     Serial.print(F("Pengiriman ke-"));
     Serial.println(i);
-    indeks = GPRScommunication();
-    if (indeks == 0) {
+    indeksGPRS = 0;//GPRScommunication();
+    if (indeksGPRS == 0) {
       Serial.println(F("GPRS ERROR"));
+      digitalWrite(ledOK,0);
+      digitalWrite(ledERROR,1);
       delay(1000);
+      dataJSON();
+      continue;
     }
-    else sendServer();    //kirim data
+    else {
+      digitalWrite(ledERROR,0);
+      Serial.println(F("KIRIM DATA KE SERVER"));
+      sendServer();    //kirim data
+    }
     if (kode == 200) break;
   }
-kode=503;
   //jika data dikirim 3 kali dan tidak masuk ke server maka kirim sms
-  if (kode != 200 && i == 3) {
+  Serial.println(F("keluar dari pengiriman data"));
+  Serial.println(kode);
+  if (kode != 200) {
     Serial.println(F("ERROR kirim. kasih tau via SMS"));
-    kirimSMS(json);
+    kirimSMS();
     delay(5000);
   }
 
