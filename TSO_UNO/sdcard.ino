@@ -3,8 +3,6 @@
 
 File file;
 
-
-
 //SD INIT
 void sdInit() {
   if (!SD.begin(SSpin)) { //SD ERROR
@@ -46,8 +44,7 @@ void configs() {
   //ID
   indeks = kalimat.indexOf("=", 1);
   indeks1 = kalimat.indexOf("\r", indeks + 1);
-  json= kalimat.substring(indeks + 2, indeks1);
-  json.toCharArray(ID,5);
+  kalimat.substring(indeks + 2, indeks1).toCharArray(ID,5);
   
   //interval data
   indeks = kalimat.indexOf("=", indeks1 + 1);
